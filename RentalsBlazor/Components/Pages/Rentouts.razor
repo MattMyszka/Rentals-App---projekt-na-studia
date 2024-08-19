@@ -1,0 +1,156 @@
+﻿@page "/rentouts"
+@using RentalsDbClasses
+@using RentalsServices
+@rendermode InteractiveServer
+@inject RentoutsService rentoutsService
+
+<PageTitle>Rentout History</PageTitle>
+
+<h1>View renting history</h1>
+
+<p>This is only for privileged eyes</p>
+
+<button class="btn btn-primary" @onclick="CallLoadRentoutsAndGetRentoutsCount">Refresh rentout count</button>
+<p role="status">Found rentings: @rentoutsCount</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Renting ID
+            </th>
+
+            <th>
+                Car ID
+            </th>
+            
+            <th>
+                User ID
+            </th>
+
+            <th>
+                Car Price
+            </th>
+
+            <th>
+                Chosen Commodities
+            </th>
+
+            <th>
+                Commodities Full Price
+            </th>
+
+            <th>
+                Full Rent Price
+            </th>
+
+            <th>
+                Rent Date
+            </th>
+            <th>
+                Rent Length
+            </th>
+
+            <th>
+                Rent Rating
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (rentoutsService.rentouts != null && rentoutsService.rentouts.Any())
+        {
+            @foreach (var rentout in rentoutsService.rentouts)
+            {
+                <tr>
+                    <td>@rentout.renting_id</td>
+                    <td>@rentout.car_id</td>
+                    <td>@rentout.user_id</td>
+                    <td>@rentout.car_price</td>
+                    <td>@rentout.car_commodities</td>
+                    <td>@rentout.commodities_price</td>
+                    <td>@rentout.full_rent_price</td>
+                    <td>@rentout.rent_date.ToString("yyyy-MM-dd")</td>
+                    <td>@rentout.rent_length</td>
+                    <td>@rentout.rent_rating</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4">No prior rentings found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-primary" @onclick="CallGoToPreviousPage" disabled="@(rentoutsService.CurrentPage == 1)"> Previous </button>
+<button class="btn btn-primary" @onclick="CallGoToNextPage" disabled="@(rentoutsCount < 51)"> Next </button>
+
+@code {
+    private int rentoutsCount = 0;
+
+    private async Task CallLoadRentoutsAndGetRentoutsCount()
+    {
+        rentoutsCount = await rentoutsService.GetRentoutsCount();
+        await rentoutsService.LoadRentouts();
+    }
+
+    private async Task CallGoToPreviousPage()
+    {
+        await rentoutsService.GoToPreviousPage();
+    }
+
+    private async Task CallGoToNextPage()
+    {
+        await rentoutsService.GoToNextPage();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CallLoadRentoutsAndGetRentoutsCount();
+    }
+}
+
+
+<style>
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th, .table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: black;
+            color: white;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .table tr:nth-child(odd) {
+            background-color: #a9a9a9;
+        }
+
+        .table tr:hover {
+            background-color: #ddd;
+        }
+
+    .log-type-insert {
+        background-color: green;
+    }
+
+    .log-type-update {
+        background-color: yellow;
+    }
+
+    .log-type-delete {
+        background-color: red;
+    }
+</style>

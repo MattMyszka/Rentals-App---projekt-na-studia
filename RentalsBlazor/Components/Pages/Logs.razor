@@ -1,0 +1,126 @@
+﻿@page "/logs"
+@using RentalsDbClasses
+@using RentalsServices
+@inject LogsService logsService
+@rendermode InteractiveServer
+
+<PageTitle>Logs</PageTitle>
+
+<h1>View Logs</h1>
+
+<p>This is only for privileged eyes</p>
+
+<button class="btn btn-primary" @onclick="CallLoadLogsAndGetLogsCount">Refresh Logs</button>
+<p role="status">Found Logs: @logsCount</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Log ID
+            </th>
+
+            <th>
+                Log Type
+            </th>
+            
+            <th>
+                Log Message
+            </th>
+
+            <th>
+                Log Date
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (logsService.logs != null && logsService.logs.Any())
+        {
+            @foreach (var log in logsService.logs)
+            {
+                <tr>
+                    <td>@log.log_id</td>
+                    <td>@log.log_type</td>
+                    <td>@log.log</td>
+                    <td>@log.log_date.ToString("yyyy-MM-dd HH:mm:ss zzz")</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4">Please wait while we load logs...</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-primary" @onclick="CallGoToPreviousPage" disabled="@(logsService.CurrentPage == 1)"> Previous </button>
+<button class="btn btn-primary" @onclick="CallGoToNextPage" disabled="@(logsCount < 51)"> Next </button>
+
+@code {
+    private int logsCount = 0;
+
+    private async Task CallLoadLogsAndGetLogsCount()
+    {
+        logsCount = await logsService.GetLogsCount();
+        await logsService.LoadLogs();
+    }
+
+    private async Task CallGoToPreviousPage()
+    {
+        await logsService.GoToPreviousPage();
+    }
+
+    private async Task CallGoToNextPage()
+    {
+        await logsService.GoToNextPage();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CallLoadLogsAndGetLogsCount();
+    }
+}
+
+<style>
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th, .table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: black;
+            color: white;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .table tr:nth-child(odd) {
+            background-color: #a9a9a9;
+        }
+
+        .table tr:hover {
+            background-color: #ddd;
+        }
+
+    .log-type-insert {
+        background-color: green;
+    }
+
+    .log-type-update {
+        background-color: yellow;
+    }
+
+    .log-type-delete {
+        background-color: red;
+    }
+</style>

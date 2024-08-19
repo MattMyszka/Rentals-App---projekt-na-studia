@@ -1,0 +1,231 @@
+﻿@page "/add_car"
+@using RentalsServices
+@inject CarService carService
+@inject CustomFunctionsService cfService
+@rendermode InteractiveServer
+
+<PageTitle>Add Car</PageTitle>
+
+<h1>Add Car</h1>
+
+<button class="btn btn-primary" @onclick="CallRefreshCarsAmount">Refresh</button>
+
+<p role="status">Found Cars: @carsCount</p>
+
+<h2>Add New Car</h2>
+
+<div>
+    <label>Car Make:</label>
+    <input type="text" @bind="carMake_" />
+</div>
+
+<div>
+    <label>Car Model:</label>
+    <input type="text" @bind="carModel_" />
+</div>
+
+<div>
+    <label>Car Price:</label>
+    <input type="number" @bind="carPrice_" />
+</div>
+
+<div>
+    <label>Car Commodity 1:</label>
+    <select @onchange="HandleCommodity1Change">
+        <option value="" disabled >Select option</option>
+        @foreach (var commodity in carCommodityOptions1)
+        {
+            <option value="@commodity">@commodity</option>
+        }
+    </select>
+
+    @if (!string.IsNullOrEmpty(carCommodity1_) && commodityPrices.ContainsKey(carCommodity1_))
+    {
+        <div>Price: @commodityPrices[carCommodity1_]</div>
+        carC1Price_ = commodityPrices[carCommodity1_];
+    }
+</div>
+
+<div>
+    <label>Car Commodity 2:</label>
+    <select @onchange="HandleCommodity2Change">
+        <option value="" disabled >Select option</option>
+        @foreach (var commodity in carCommodityOptions2)
+        {
+            <option value="@commodity">@commodity</option>
+        }
+    </select>
+
+    @if (!string.IsNullOrEmpty(carCommodity2_) && commodityPrices.ContainsKey(carCommodity2_))
+    {
+        <div>Price: @commodityPrices[carCommodity2_]</div>
+        carC2Price_ = commodityPrices[carCommodity2_];
+    }
+</div>
+
+<div>
+    <label>Car Commodity 3:</label>
+    <select @onchange="HandleCommodity3Change">
+        <option value="" disabled >Select option</option>
+        @foreach (var commodity in carCommodityOptions3)
+        {
+            <option value="@commodity">@commodity</option>
+        }
+    </select>
+
+    @if (!string.IsNullOrEmpty(carCommodity3_) && commodityPrices.ContainsKey(carCommodity3_))
+    {
+        <div>Price: @commodityPrices[carCommodity3_]</div>
+        carC3Price_ = commodityPrices[carCommodity3_];
+    }
+</div>
+
+<button class="btn btn-primary" @onclick="AddCarSubmitter" disabled="@(!IsDataValid())">Add New Car</button>
+
+
+@code {
+
+    //ON INI
+    protected override async Task OnInitializedAsync()
+    {
+        await CallRefreshCarsAmount();
+        await InitializeCommodityOptionsAsync();
+        commodityPrices = await carService.GetCommodityPricesAsync();
+    }
+
+    //COUNT CARS
+    #region count
+    private int carsCount = 0;
+
+    //funkcja odświeża wyświetlaną ilość pojazdów 
+    private async Task CallRefreshCarsAmount()
+    {
+        carsCount = await carService.CountCarsAsync();
+    }
+    #endregion
+
+    //ADD CARS
+    #region Add
+
+    private string carMake_ = "n/a";
+    private string carModel_  = "n/a";
+    private float carPrice_  = 0;
+    private string carCommodity1_  = "n/a";
+    private float carC1Price_  = 0;
+    private string carCommodity2_  = "n/a";
+    private float carC2Price_  = 0;
+    private string carCommodity3_ = "n/a";
+    private float carC3Price_ = 0;
+
+    private string queryStart = "BEGIN;";
+    private string queryTask = "n/a";
+    private string queryEnd = "ROLLBACK;";
+
+    private async Task CallAddCarQueryAsync() //przypisanie do queryTask zmiennej zwróconej przez AddCarQueryAsync
+    {
+        queryTask = await carService.AddCarQueryAsync(carMake_, carModel_, carPrice_, carCommodity1_, carC1Price_, carCommodity2_, carC2Price_, carCommodity3_, carC3Price_);
+    }
+
+    private async Task CallQueryEndAsync() //zwrot kodu zakończenia dla pełnej kwerendy
+    {
+        queryEnd = await cfService.AcceptQueryAsync();
+    }
+
+    private async Task CallExecuteFullQueryAsync() //wywołanie pełnej kwerendy na podstawie utworzonych zmiennych
+    {
+        await cfService.ExecuteFullQueryAsync(queryStart, queryTask, queryEnd);
+    }
+
+    //funkcja sprawdza czy podane dane są prawidłowe, zanim będzie można przepuścić je do kwerendy
+    private bool IsDataValid()
+    {
+        bool isCarMakeValid = !string.IsNullOrWhiteSpace(carMake_) && carMake_ != "n/a"; 
+        bool isCarModelValid = !string.IsNullOrWhiteSpace(carModel_) && carModel_ != "n/a";
+
+        bool isCarPriceValid = carPrice_ > 0;
+
+        return isCarMakeValid && isCarModelValid && isCarPriceValid;
+    }
+
+    //funckja dla przycisku, zajmująca się dodaniem pojazdu do bazy
+    private async Task AddCarSubmitter()
+    {
+        await CallAddCarQueryAsync();
+        await CallQueryEndAsync();
+        await CallExecuteFullQueryAsync();
+        await CallRefreshCarsAmount();
+    }
+    
+    #region Commodity Handler
+
+    Dictionary<string, float> commodityPrices = new Dictionary<string, float>();
+
+    private List<string> carCommodityOptions1 = new List<string>();
+    private List<string> carCommodityOptions2 = new List<string>();
+    private List<string> carCommodityOptions3 = new List<string>();
+
+    private bool commodity1Selected = false;
+    private bool commodity2Selected = false;
+    private bool commodity3Selected = false;
+
+    private List<string> GetAvailableCommodities(List<string> allCommodities, string selectedCommodity)
+    {
+        return allCommodities.Where(c => selectedCommodity == "n/a" || c != selectedCommodity).ToList();
+    }
+
+    private async Task InitializeCommodityOptionsAsync()
+    {
+
+        carCommodityOptions1 = await carService.GetCommodityNamesAsync();
+        carCommodityOptions2 = await carService.GetCommodityNamesAsync();
+        carCommodityOptions3 = await carService.GetCommodityNamesAsync();
+    }
+
+    private void HandleCommodity1Change(ChangeEventArgs e)
+    {
+        carCommodity1_ = e.Value.ToString();
+        if (carCommodity1_ == "Select option")
+        {
+            commodity1Selected = false;
+        }
+        else
+        {
+            commodity1Selected = true;
+            carC1Price_ = commodityPrices.GetValueOrDefault(carCommodity1_, 0);
+            carCommodityOptions2 = GetAvailableCommodities(carCommodityOptions1, carCommodity1_);
+        }
+    }
+
+    private void HandleCommodity2Change(ChangeEventArgs e)
+    {
+        carCommodity2_ = e.Value.ToString();
+        if (carCommodity2_ == "Select option")
+        {
+            commodity2Selected = false;
+        }
+        else
+        {
+            commodity2Selected = true;
+            carC2Price_ = commodityPrices.GetValueOrDefault(carCommodity2_, 0);
+            carCommodityOptions3 = GetAvailableCommodities(carCommodityOptions2, carCommodity2_);
+        }
+    }
+
+    private void HandleCommodity3Change(ChangeEventArgs e)
+    {
+        carCommodity3_ = e.Value.ToString();
+        if (carCommodity3_ == "Select option")
+        {
+            commodity3Selected = false;
+        }
+        else
+        {
+            commodity3Selected = true;
+            carC3Price_ = commodityPrices.GetValueOrDefault(carCommodity3_, 0);
+        }
+    }
+
+    #endregion
+
+    #endregion
+}

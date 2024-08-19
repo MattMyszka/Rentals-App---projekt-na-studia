@@ -1,0 +1,295 @@
+﻿@page "/rent_car"
+@using RentalsDbClasses
+@using RentalsServices
+@inject NavigationManager navigation
+@inject CarService carService
+@inject CustomFunctionsService cfService
+@inject AuthenticationService authService
+@inject UsersService usersService
+@inject IJSRuntime jsRuntime
+@rendermode InteractiveServer
+
+
+<PageTitle>Rent a Car!</PageTitle>
+<h1>Rent a Car</h1>
+
+@if (rentals != null && rentals.Any())
+{
+    <table class="car-table">
+        <thead>
+            <tr>
+                <th>Car Make</th>
+                <th>Car Model</th>
+                <th>Price For Day </th
+                <th>Rating</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rental in rentals)
+            {
+                <tr @onclick="() => SelectCar(rental)" class="car-row">
+                    <td>@rental.car_make</td>
+                    <td>@rental.car_model</td>
+                    <td>@rental.car_price</td>
+                    <td> Rating: @rental.car_rating - Ratings: @rental.car_ratings_amount</td>
+                </tr>
+                @if (selectedRental == rental)
+                {
+                    <tr class="car-details">
+                        <td colspan="4">
+                            @if (rental.car_commodity1 != "n/a" && rental.car_c1_price != 0)
+                            {
+                                <div>
+                                    @rental.car_commodity1 - @rental.car_c1_price
+                                    <input type="checkbox" @bind="commodity1_isSelected" />
+                                </div>
+                            }
+                            @if (rental.car_commodity2 != "n/a" && rental.car_c2_price != 0)
+                            {
+                                <div>
+                                    @rental.car_commodity2 - @rental.car_c2_price
+                                    <input type="checkbox" @bind="commodity2_isSelected" />
+                                </div>
+                            }
+                            @if (rental.car_commodity3 != "n/a" && rental.car_c3_price != 0)
+                            {
+                                <div>
+                                    @rental.car_commodity3 - @rental.car_c3_price
+                                    <input type="checkbox" @bind="commodity3_isSelected" />
+                                </div>
+                            }
+                            <div class="rent-length">
+                                <label>Renting Length:</label>
+                                <input type="number" @bind="rentLength" min="1" style="width: 5em;" />
+                                <span> days</span>
+                            </div>
+                            <div class="total-price">
+                                Total Price: @(CalculateTotalPrice(rental))
+                                <button class="btn btn-primary" @onclick="CheckIsLoggedIn">Rent</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Unfortunately, no cars have been found</p>
+}
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshRentals();
+    }
+
+    #region Renting
+    private List<Rental> rentals = new List<Rental>();
+    private Rental selectedRental = new Rental();
+    private int rentLength = 1;
+
+    private bool commodity1_isSelected;
+    private bool commodity2_isSelected;
+    private bool commodity3_isSelected;
+
+    private int userId = 0;
+    private float fullRentPrice = 0;
+    private string selectedCommodities = "n/a";
+    private DateOnly rentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+
+    private string queryStart = "BEGIN;";
+    private string queryTask = "n/a";
+    private string queryEnd = "ROLLBACK;";
+
+    public bool isLoggedIn { get; set; }
+
+    private async Task CallRentQueryAsync()
+    {
+        if (selectedRental != null)
+        {
+            float commoditesPrice = CalculateCommodityPrice(selectedRental);
+            fullRentPrice = CalculateTotalPrice(selectedRental);
+            selectedCommodities = GetSelectedCommodities(selectedRental);
+
+            queryTask = await carService.RentQueryAsync(selectedRental.car_id, userId, selectedRental.car_price, selectedCommodities, commoditesPrice, rentDate, rentLength, fullRentPrice);
+        }
+    }
+
+    private async Task CallQueryEndAsync()
+    {
+        queryEnd = await cfService.AcceptQueryAsync();
+    }
+
+    private async Task CallExecuteFullQueryAsync()
+    {
+        await cfService.ExecuteFullQueryAsync(queryStart, queryTask, queryEnd);
+    }
+
+    private bool IsDataValid()
+    {
+        bool isCarSelected = selectedRental != null;
+        bool isRentLengthValid = rentLength > 0;
+
+        return isCarSelected && isRentLengthValid;
+    }
+
+    private void SelectCar(Rental rental)
+    {
+        selectedRental = selectedRental == rental ? null : rental;
+    }
+
+    private async Task RentCarSubmitter()
+    {
+        await CallRentQueryAsync();
+        await CallQueryEndAsync();
+        await CallExecuteFullQueryAsync();
+        Console.WriteLine($"Executing Query: {queryStart + queryTask + queryEnd}");
+        await RefreshRentals();
+    }
+    #endregion
+
+    #region misc
+
+        private async Task LoadLoginData()
+        {
+            isLoggedIn = await authService.IsLoggedInAsync();
+            if (isLoggedIn)
+            {
+                User user_ = await usersService.GetUserByLogin(await jsRuntime.InvokeAsync<string>("getCookie", "user_login"));
+                userId = user_.user_id;
+            }
+        }
+
+        private async Task CheckIsLoggedIn()
+        {
+            await LoadLoginData();
+
+            if (isLoggedIn)
+            {
+                await RentCarSubmitter();
+            }
+            else
+            {
+                NavigateToLogin();
+            }
+        }
+
+        private void NavigateToLogin()
+        {
+            navigation.NavigateTo("/manage_account", true);
+        }
+
+        private async Task RefreshRentals()
+        {
+            rentals = await carService.GetAvailableCarsAsync();
+        }
+
+        private string GetSelectedCommodities(Rental rental)
+        {
+            List<string> selected = new List<string>();
+
+            if (commodity1_isSelected)
+            {
+                selected.Add($"{rental.car_commodity1} - {rental.car_c1_price}");
+            }
+            if (commodity2_isSelected)
+            {
+                selected.Add($"{rental.car_commodity2} - {rental.car_c2_price}");
+            }
+            if (commodity3_isSelected)
+            {
+                selected.Add($"{rental.car_commodity3} - {rental.car_c3_price}");
+            }
+
+            return string.Join(", ", selected);
+        }
+
+        private float CalculateTotalPrice(Rental rental)
+        {
+            float basePrice = rental.car_price * rentLength;
+            float commodityPrice = CalculateCommodityPrice(rental);
+
+            return basePrice + commodityPrice;
+        }
+
+    private float CalculateCommodityPrice(Rental rental)
+    {
+        float commodityPrice = 0;
+
+        if (commodity1_isSelected)
+        {
+            commodityPrice += rental.car_c1_price;
+        }
+        if (commodity2_isSelected)
+        {
+            commodityPrice += rental.car_c2_price;
+        }
+        if (commodity3_isSelected)
+        {
+            commodityPrice += rental.car_c3_price;
+        }
+
+        return  commodityPrice;
+    }
+    #endregion
+}
+<!--
+<style>
+    .car-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .car-table th, .car-table td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .car-table th {
+        background-color: black;
+        color: white;
+    }
+
+    .car-row {
+        cursor: pointer;
+    }
+
+    .car-row:nth-child(even) {
+        background-color: #f2f2f2; 
+    }
+
+    .car-row:nth-child(odd) {
+        background-color: #a9a9a9; 
+    }
+
+    .car-row:hover {
+        background-color: #ddd;
+    }
+
+    .car-details {
+        background-color: #e7e7e7;
+    }
+
+    .car-details div {
+        margin: 8px 0;
+    }
+
+    .rent-length {
+        margin-top: 10px;
+    }
+
+    .total-price {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 16px;
+    }
+
+    .btn {
+        margin-top: 10px;
+    }
+</style>
+-->

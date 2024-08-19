@@ -1,0 +1,448 @@
+﻿@page "/manage_account"
+@using System.ComponentModel.DataAnnotations
+@using RentalsDbClasses
+@using RentalsServices
+@inject UsersService usersService
+@inject CustomFunctionsService cfService
+@inject AuthenticationService authService
+@inject CarService carService
+@inject IJSRuntime jsRuntime
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+<PageTitle>Account</PageTitle>
+
+@if (isLoggedIn)
+{
+    <div>Hello, @name!</div>
+    @if (isLoggedIn == true && userPrivilege == "employee" || userPrivilege == "admin")
+    {
+        <p>Your privilege status: @userPrivilege</p>
+    }
+    <button type="button" @onclick="LogoutUser">Log-out</button>
+   
+    @if (rentingHistory != null && rentingHistory.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Car Mark</th>
+                    <th>Car Model</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var renting in rentingHistory)
+                {
+                    <tr @onclick="() => SelectRenting(renting)" class="table-row">
+                        <td>@renting.car_make</td>
+                        <td>@renting.car_model</td>
+                        
+                    </tr>
+                    @if(selectedRenting == renting)
+                    {
+                        <tr class="renting-details">
+                            <td>Rent Date and Length: @renting.rent_date.ToShortDateString() - @renting.rent_length</td>
+                            <td>Paid Amount: @renting.full_rent_price</td>
+                            <td>
+                                Given Rating: @renting.rent_rating
+                                <input type="range" min="1" max="5" @bind="@rating" @oninput="UpdateRating" />
+                                <span>@rating</span>
+                                <button class="btn btn-primary" @onclick="CallRateCar">Submit Rating</button>
+                            </td>
+                            <td>Returned: @renting.is_returned
+                                @if (renting.is_returned == false)
+                                {
+                                    <button class="btn btn-primary" @onclick="() => CallReturnCar()">Return Car</button>
+                                }
+                            </td>
+                            
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No rentings found.</p>
+    }
+}
+
+@if (showLoginForm)
+{
+    <div>
+        <label>Login:</label>
+        <input type="text" @bind="login" />
+        <br />
+        <label>Password:</label>
+        <input type="password" @bind="password" />
+        <br />
+        <button class="btn btn-primary" @onclick="LoginUser">Log-in</button>
+    </div>
+
+    <p>@errorMessage</p>
+    <button type="button" @onclick="ToggleStartRegisterForm">Register account</button>
+}
+
+@if (showStartRegisterForm)
+{
+    <div>
+        <label> Create Login:</label>
+        <input type="text" @bind="login" />
+        <br />
+        <label>Create Password:</label>
+        <input type="password" @bind="password" />
+        <br />
+        <button class="btn btn-primary" @onclick="TryRegisterUser">Register</button>
+        <p>@errorMessage</p>
+    </div>
+    <button type="button" @onclick="ToggleLoginForm">Log-in to existing account</button>
+}
+
+@if (showRegisterForm)
+{
+    <div>
+        <label> Name:</label>
+        <input type="text" @bind="name" />
+        <br />
+        <label>Surname:</label>
+        <input type="text" @bind="surname" />
+        <br />
+        <label> Email:</label>
+        <input type="text" @bind="email" />
+        <br />
+        <label> PESEL:</label>
+        <input type="text" @bind="pesel" @oninput="ValidatePesel" />
+        <br />
+        <label> Phone Number:</label>
+        <input type="text" @bind="phoneNumber" @oninput="ValidatePhoneNumber" />
+        <br />
+        <button class="btn btn-primary" @onclick="RegisterUser" disabled="@(!IsDataValid())">Register</button>
+        <p>@errorMessage</p>
+    </div>
+    <button type="button" @onclick="ToggleLoginForm">Log-in to existing account</button>
+}
+
+@code {
+    private bool isLoggedIn = false;
+    private string userPrivilege = "";
+
+    private string login = "";
+    private string password = "";
+    private string email = "";
+    private string name = "";
+    private string surname = "";
+    private string pesel = "";
+    private string phoneNumber = "";
+    private float rating = 3;
+
+    private bool showStartRegisterForm = false;
+    private bool showRegisterForm = false;
+    private bool showLoginForm = true;
+
+    private string errorMessage = "";
+    private bool isInitialized = false;
+
+    private string queryStart = "BEGIN;";
+    private string queryTask = "n/a";
+    private string queryEnd = "ROLLBACK;";
+
+    private List<UserRentingHistory> rentingHistory = new List<UserRentingHistory>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CheckCookiesAsync();
+
+            if (isLoggedIn)
+            {
+                ToggleLoggedIn();
+                await RefreshHistory();
+            }
+
+            isInitialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CheckCookiesAsync()
+    {
+        var isLoggedInCookie = await jsRuntime.InvokeAsync<string>("getCookie", "IsLoggedIn");
+        isLoggedIn = isLoggedInCookie == "true";
+        login = await jsRuntime.InvokeAsync<string>("getCookie", "user_login");
+        userPrivilege = await jsRuntime.InvokeAsync<string>("getCookie", "user_privilege");
+
+        Console.WriteLine($"IsLoggedIn: {isLoggedIn}, Login: {login}, User Privilege: {userPrivilege}");
+    }
+
+    private async Task LoadRentingHistory(int userId)
+    {
+        rentingHistory = await usersService.GetUserRentingHistory(userId);
+    }
+
+    #region Logowanie
+
+    private async Task LoginUser()
+    {
+        errorMessage = "";
+        var isAuthenticated = await usersService.TestPassword(login, password);
+
+        if (isAuthenticated)
+        {
+            Console.WriteLine($"User {login} has been logged in.");
+
+            isLoggedIn = true;
+            showLoginForm = false;
+            var user = await usersService.GetUserByLogin(login);
+            name = user?.user_name ?? "";
+            userPrivilege = await usersService.GetUserPrivilegeByLogin(login);
+
+            await SetCookiesAsync();
+            await LoadRentingHistory(user.user_id);
+            StateHasChanged();
+        }
+        else
+        {
+            errorMessage = "Failed to log in. Login or password incorrect.";
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetCookiesAsync()
+    {
+        userPrivilege = await usersService.GetUserPrivilegeByLogin(login);
+        await jsRuntime.InvokeVoidAsync("setCookie", "IsLoggedIn", "true", 5);
+        await jsRuntime.InvokeVoidAsync("setCookie", "user_login", login, 5);
+        await jsRuntime.InvokeVoidAsync("setCookie", "user_privilege", userPrivilege, 5);
+        navigation.NavigateTo(navigation.Uri, forceLoad: true);
+        StateHasChanged();
+
+    }
+
+    private async Task LogoutUser()
+    {
+        await authService.ClearCookies();
+
+        isLoggedIn = false;
+        login = "";
+        userPrivilege = "";
+        showLoginForm = true;
+        rentingHistory = null;
+        navigation.NavigateTo(navigation.Uri, forceLoad: true);
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region rejestracja
+
+    private async Task CallAddUserQueryAsync()
+    {
+        string salt = await authService.GetSalt();
+        string hashedPassword = await usersService.HashPasswordWithSalt(password, salt );
+        queryTask = await usersService.AddUserQueryAsync(login, hashedPassword, salt, email, name, surname, pesel, phoneNumber);
+    }
+
+    private async Task CallQueryEndAsync()
+    {
+        queryEnd = await cfService.AcceptQueryAsync();
+    }
+
+    private async Task CallExecuteFullQueryAsync()
+    {
+        await cfService.ExecuteFullQueryAsync(queryStart, queryTask, queryEnd);
+    }
+
+    private void ValidatePesel(ChangeEventArgs e)
+    {
+        if (e.Value is string inputValue)
+        {
+            pesel = new string(inputValue.Where(char.IsDigit).ToArray());
+
+            if (pesel.Length > 11)
+            {
+                pesel = pesel.Substring(0, 11);
+            }
+        }
+    }
+
+    private void ValidatePhoneNumber(ChangeEventArgs e)
+    {
+        if (e.Value is string inputValue)
+        {
+            phoneNumber = new string(inputValue.Where(char.IsDigit).ToArray());
+
+            if (phoneNumber.Length > 9)
+            {
+                phoneNumber = phoneNumber.Substring(0, 9);
+            }
+        }
+    }
+
+    private bool IsDataValid()
+    {
+        bool isNameValid = !string.IsNullOrWhiteSpace(name);
+        bool isSurnameValid = !string.IsNullOrWhiteSpace(surname);
+        bool isEmailValid = !string.IsNullOrWhiteSpace(email);
+        bool isPeselValid = cfService.IsDigitStringValid(pesel, 11);
+        bool isPhoneNumberValid = cfService.IsDigitStringValid(phoneNumber, 9);
+
+        return isNameValid && isSurnameValid && isEmailValid && isPeselValid && isPhoneNumberValid;
+    }
+
+    private async Task TryRegisterUser()
+    {
+        errorMessage = "";
+        if (!string.IsNullOrWhiteSpace(login) && !string.IsNullOrWhiteSpace(password)) 
+        {
+            if (!await usersService.IsLoginUsed(login))
+            {
+                showStartRegisterForm = false;
+                showRegisterForm = true;
+            }
+            else
+            {
+                errorMessage = "Chosen login is in use. Try another";
+            }
+        }
+        else
+        {
+            errorMessage = "Please input valid login and password.";
+        }
+    }
+
+    private async Task RegisterUser()
+    {
+        await CallAddUserQueryAsync();
+        await CallQueryEndAsync();
+        await CallExecuteFullQueryAsync();
+        Console.WriteLine($"Executing Query: {queryStart + queryTask + queryEnd}");
+
+        await SetCookiesAsync();
+        StateHasChanged();
+        ToggleLoggedIn();
+    }
+
+    #endregion
+
+    #region zmiany stanu form
+    private void ToggleStartRegisterForm()
+    {
+        showLoginForm = false;
+        showStartRegisterForm = true;
+        showRegisterForm = false;
+    }
+
+    private void ToggleRegisterForm()
+    {
+        showLoginForm = false;
+        showStartRegisterForm = false;
+        showRegisterForm = true;
+    }
+
+    private void ToggleLoginForm()
+    {
+        showLoginForm = true;
+        showStartRegisterForm = false;
+        showRegisterForm = false;
+    }
+
+    private void ToggleLoggedIn()
+    {
+        isLoggedIn = true;
+        showLoginForm = false;
+        showStartRegisterForm = false;
+        showRegisterForm = false;
+    }
+
+    #endregion
+
+    #region Renting History
+
+    private class RentingHistory
+    {
+        public string CarMark { get; set; }
+        public string CarModel { get; set; }
+        public DateTime RentDate { get; set; }
+        public int Duration { get; set; }
+        public decimal TotalCost { get; set; }
+        public float Rating { get; set; }
+    }
+
+    private UserRentingHistory selectedRenting = new UserRentingHistory();
+
+    private void SelectRenting(UserRentingHistory renting)
+    {
+        selectedRenting = selectedRenting== renting ? null : renting;
+    }
+
+    private void UpdateRating(ChangeEventArgs e)
+    {
+        rating = int.Parse(e.Value.ToString());
+    }
+
+    private async Task RefreshHistory()
+    {
+        var user = await usersService.GetUserByLogin(login);
+        name = user?.user_name ?? "";
+        await LoadRentingHistory(user.user_id);
+        StateHasChanged();
+    }
+
+    private async Task CallRateCar()
+    {
+        if (selectedRenting != null)
+        {
+            await carService.RateCar(selectedRenting.renting_id, rating);
+            await RefreshHistory();
+            
+        }
+    }
+
+    private async Task CallReturnCar()
+    {
+        if (selectedRenting != null)
+        {
+            await carService.ReturnCar(selectedRenting.renting_id);
+            await RefreshHistory();
+        }
+    }
+
+    private async Task<bool> CheckIfRentingIsReturned(UserRentingHistory renting)
+    {
+        return await Task.FromResult(renting.is_returned);
+    }
+
+    #endregion
+}
+
+<style>
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th, .table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: black;
+            color: white;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .table tr:nth-child(odd) {
+            background-color: #a9a9a9;
+        }
+
+        .table tr:hover {
+            background-color: #ddd;
+        }
+</style>

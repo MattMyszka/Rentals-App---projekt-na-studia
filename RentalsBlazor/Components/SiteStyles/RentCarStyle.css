@@ -1,0 +1,53 @@
+﻿.car-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .car-table th, .car-table td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .car-table th {
+        background-color: black;
+        color: white;
+    }
+
+.car-row {
+    cursor: pointer;
+}
+
+    .car-row:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .car-row:nth-child(odd) {
+        background-color: #a9a9a9;
+    }
+
+    .car-row:hover {
+        background-color: #ddd;
+    }
+
+.car-details {
+    background-color: #e7e7e7;
+}
+
+    .car-details div {
+        margin: 8px 0;
+    }
+
+.rent-length {
+    margin-top: 10px;
+}
+
+.total-price {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 16px;
+}
+
+.btn {
+    margin-top: 10px;
+}

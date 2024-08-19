@@ -1,0 +1,101 @@
+﻿@* UserPageIcon.razor *@
+<style>
+    .logs_icon {
+        position: absolute;
+        height: 128px;
+        width: 128px;
+        padding: 0px;
+    }
+
+    .background {
+        background-color:;
+        height: 128px;
+        width: 128px;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+    }
+
+    .doc {
+        background-color:;
+        height: 68px;
+        width: 48px;
+        filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.25));
+        left: 40px;
+        top: 36px;
+        position: absolute;
+    }
+
+    .rectangle42 {
+        background-color: #a6b5d7;
+        height: 18px;
+        width: 56px;
+        left: 35px;
+        top: 63px;
+        position: absolute;
+    }
+
+    .log2 {
+        color: #000000;
+        text-align: center;
+        vertical-align: text-middle;
+        font-size: 12px;
+        font-family: Arial;
+        line-height: auto;
+        border-style: hidden;
+        outline:;
+        left: 50px;
+        top: 64px;
+        position: absolute;
+        width: 24px;
+    }
+
+    .text_lines {
+        height: 12px;
+        width: 30px;
+        padding: 0px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        left: 47px;
+        top: 45px;
+        position: relative;
+    }
+
+    .line1 {
+        width: 19px;
+        border: 1.5px solid #000000;
+    }
+
+    .line2 {
+        width: 30px;
+        border: 1px solid #000000;
+        top: 6px;
+        left: 0px;
+        position: absolute;
+    }
+
+    .line3 {
+        width: 30px;
+        border: 1px solid #000000;
+        top: 12px;
+        left: 0px;
+        position: absolute;
+    }
+</style>
+
+<div id='logs_icon' class='logs_icon'>
+<img id='background' class='background' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAaUSURBVHgB7ZpNT1RXGMefc+aFhEaYBWyU1Im6oRuHtIltKnRm4apdCLQLFSt8AuETWD8B8AmgqeKKl0V3rWEAk+qicexCN2rHBHUBC8BCOi/3np5zSQgq58xlIDC3z/+X4EzuOfcufH7nOc99zgg6JCZm/0gn/UpWSXleKJUVpFKKREoPpQgcCP1/WdT/Fn0hClJRQYjYwpXer4p0CAg6ABOzj1NJ/59hIdQNHew0gSNDB84IMRej2PhBZKhLgF9ml7IxoltKUZbA8SPEpKTY7XpE2JcA93SaV1Qd1YG/TKDxqEMEGXbinekHw76qPkbwGxilBpWqzk/NPLgR9pZQGeDuzNKY/rhJIDIIIcau9l4cqTnPNRgUeWpzXquVIRBFCuX1am5oKLdmm2AVoJ7gb2wpevnGp5V1n5ZXFJUrRKWKIlA/TQlBJ5qJWpoFdbRLOnNSBt/3gVOCuO2u/QT/6SuPnum/16sI9mFjFlBpnWh1XS+utz4t/kXU1iqo61yMOk/Hwjwik2yN61hS116De6oUds9fXvHptz+r9G4LgT8OTCa40BlOBFtN8JEAd6cXB/XsCXJgrHz41KMnLzwCx09GZwMjgtkuXCjljwz0fzO2+9p7dwTv+fo1Qq/ntO0hG5uKfn1YCVISaBxMNujrSdSqD9akiHft7hO81wfwybtVK/jTSwh+I2IK8JnFSvDpIOX71dHdF3Z0MatfN3r+tt1p0v7U/Qr2+wbHFIj9OhO4tgPfo9z1H7rz5vtOBjCrnxyYPR/Bb3xMdn70zF2bxWK0E+tAALP6TRvRdoN5zUPBFx0Kz73gDc2GXsbZiYn54Jhebl+oOF/5ahkFGo/f9eu5i2RLPIj59haghPWAx6x+pP7oYYpB05yzIrYzvqhV/E3dL6Pqjyin2mRQENpQTTItfb+StU0wr30IfnR5veq7s3dJZaWQdN42bnrPINq8eOOIofIzugYQ1gOf5RUUf1Fndd0ugD4fyEqlVNo2YWOLQMQxx/J2VMpkgLRt+B0EiDylimtUpKT7ZhSAUadGDFOhfxQK/p9AAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOZAAOYYAdZsg00JQSDa1IqhFkBZBUgmCESclk9cAqiiFkBYBehoRwaIOiea7WOKRFEKofK2Ce2tKBGiTkebI4ZKFaTy6Ylt/MxJCBB1nDEUsiCl9PK28ZZmQafasA1ElfaUDGJoo1KqLMgrvbmiKQZskzpPxwhEk8xZVwZXxaErueL2DCEmbdM+0wKcaEYWiBpm5bsWr1I0Zz4DAcpUHXc8iy59HicQLS50ujN3pewFMQ8EGOrNrQlBedvkjnZJmXPYCqKCiZVz61Zq0qR/83Vnk/CIbpMDY1RbK7aCRsek/lqrv1z2dmK9I8D13u68zgJztptMS/G7LxOoBxoYE/y+noS7/btr9RveKxNL/1ZHyHE2YNqK/d2QoBEx2dkEv6XZ3frdvfoNH82+M70wLIQcJQeliqJHzzwqPPcIHD9mzzdpv9bBj279Dg70Xfx597U975iaXhxVQgxTDZ6+8gIR3m0pAkePWe2XvojrZl3tjq1Samygv2fkw+tWZe7OLD3WHxkKgRHhyQuPVtYgwlFg3so6P5X7adIVrvV1d+01YH3BL4tqLqni8xRCAtMsMn8bm4pevvVpedUPssLG5vZ2AerHpPWmxPbJbJs+nDure/v7rMEK5fVqzjbofNLE7HwqrASgIQmCPzSUsxb2oVQKWxOAxsG2539IqPPeq/pBnlJDrkMj0CioNfJpOEzwDaEP/H/s75ksl7ycaSQQaEiEUnM6Rl3Xvu8eD30P1cHEvfl0Mhm7pU8RBwkcO7rMzktSP13t61mgfXKglp4RIZGM3dQt5Mv6UWkCR4jejpWYLG9Ux11FXi0OradrZIglY1m9p5wnKTI6HaUhxWEQ/Gp7zfx4Vxd2eSlUwW+K5we+/foVHQL/Adx3RUUHQXVWAAAAAElFTkSuQmCC'/>
+<img id='doc' class='doc' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAABMCAYAAAA4NXTJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAWtSURBVHgB3VzNTuNIEC47DuFvd4EFaWdP2REnTkg8AGhfLPAoPAIPMEt4AK6ckIbTXkAQjfiJcWLP9zXdTbdjA5lBE9OfVHL/uePqqq6q7rYjMomiYfR1fn6+K++AqNfrxSJSNJC+grp8RpmWKeca62vGgr29Pdnd3ZVfjYuLCzk8PBTzDP1+31ZBkv8Oh8MLeWJ6KpC5NmhR31xAmsUscHx8bCXH9P7+vifJTqfzWaZArK+UXLK6utqWhgEDLWDSZLtpmn7B9Z+33m/UUqnozc1N4xgkykyC/pMnJl+dk64Eo6WlpURmjJWVFZseDAY2XcNk97X+Yicd3d3dTW2l3ht1DBIvSLIWcSk/tXX61ZiWyTKDM5fgWzANk5bBtbW1aHFxUZqEsoq6qGHyMzyN184yeH19Lff39zJrdLtdm36JQaKCyS9RFHlaaa3m+vp6cXV1JU0ADQ2ZOzo6qqxnncu8aQ90d3Z2Wqenp0yb4EBiFLahor8j/UlmHMkQCNF+Jm6dx/2eu6NI50C/NYVBhmjb29sF1LWSCUhM1Rli3qmnoOa4cCj0fFQSZAUc/V9NYHBa8FkdBv8ELYBaIDUhC6OzTXD074BYnkNQ301IGHDja89NWKvzwRHBI1hhfchI5hVEdHewKypjdZVoWiTzHjB7MApNiGTeA1BRm/aWSxII8jyPtGd4YtDoK/xgCEbGGEwFxWBgftACMcCEFQ0KWFmENwfLnsBlsAjBTZQ9gReqASEYGfIQGcNp103a8gQRyYheQJSNjKqQAGAcfdnIhCJBb+slRDcR1YVqwQTb5dWEQRRKsE14sahGEAZGI6paDzZuZ/tHwT3eh4eHiG7C3T8sQlFRzkHQ06avPKtmMH7QoMoPBgO9O+6d8AYDxtX9fj9yQzUTxQTBKONqWlFPRWl5JCB4wfbW1lZQKkp4ElxYWFABakj7ol4kg4xSz0D8oOKlHMkEo6LQQsWLnoOFcvSG2xDgamFUOrAPJhZ1YeagEmsIc9AVknETKgalHwxh617vDFqbwtWEYqopr5D8LPTxg3824SAIa1q3qxYkbLAd0EsIMrFtCD8Y3HLJpL2X8ULxg7UHoIEcvtSe0UsoJ7x6DnpbFkRQB6C0K3bBq4Pt4A5ArR/kHKTehjIHCRNfWwlSbzEHg3H82IZR1w/3WcFbcXZ2VmlkgtpZE7o+0R9mgeZBy6D/WTOrz+t+BCcnJ+5neH/Dntxiyg2RHrHAvNLsvbP9UQme4JPmpQ038fxK88bGRigvxFrQTbgqyhe5Fzudzh9pmi4lSUKVTUajUWUAgPqiru6N8FfeSSLoz6ZNvSkrt3H7QXmG8hTpW9A3EJ3hA2jU0j8SQ28TOMn2eDxuE3z4PM8VI3Ec5wTajUG8FsjyAXLUmzovrWmsywunzZj3OmWqjemPxN/jFc9Q6PpCt7F987fMcwFsk0I4j3j+R6btb5tRAE9jXZhBtKnudMStN2fERUrW1owo7o+yLLPtkBfkVVvdxqbLbZ1+3T4LmbTske63cCXJZwezj9C8TPNg+27pDCUYDQYDpbIYBTHMYnRIHJVMk03rEVNluo2tw49mGOVU10+0RT7jaJtyZ/TdftLS7/Je01/m9sd7sWmWLi8vPw6Hw6zX641gXQslQWTyg4MDDonxixm/BuXqgjvFOr5z54xKt1pmfJ5H2bTHaHKXjld1D65eH6xnWpebetsf7y2vbhgrs2/u/tFCmt8FU/nt7W2O9hmIA2HF63bQgruIYVFbmtHYfT2/ZtdNPSQt8OXlZa3BYZzLM3P25/TjGZmK9hPpF6Dm6Obm5vj8/Ny1AZ5XMH8UkOiPm9qI5/hNkyLtK9smr9PtirRXr+/z2jh9levc/Fz5GUxZRZ+JppbmoWYYnsTuptWaSp4PaNw/FrB1pm05XZV3B7SqjmUOSblvJy8VzzCB70+A4iLTuQH6AAAAAElFTkSuQmCC'/>
+<img id='rectangle42' class='rectangle42' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAASCAYAAAAOsR1OAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABqSURBVHgB7dexCYAwFIThi7iMgq2LWLqC47iCy9gKcRzNA3073HEfBNL+kOJSADwQ1kFc/1+GacbYjoJ6nbjbCRkYccu6QcKxZ6D8E3UgOweycyA7B7JzILvcojFQY8MpqN8ODQX+D3J7ARVnE5rk89F3AAAAAElFTkSuQmCC'/>
+<div id='log2' class='log2'> LOG </div>
+<div id='text_lines' class='text_lines'>
+<div id='line1' class='line1'>
+</div>
+<div id='line2' class='line2'>
+</div>
+<div id='line3' class='line3'>
+</div>
+</div>
+</div>
+

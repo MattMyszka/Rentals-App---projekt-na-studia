@@ -1,0 +1,106 @@
+﻿@inject NavigationManager navigation
+@inject AuthenticationService authService
+@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Rentals</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+       
+        @if(forceReload)
+        {
+            @LoadLoginData()
+        }
+
+        @if (!isLoggedIn || isLoggedIn)
+        {
+                
+            @if (userPrivilege == "employee" || userPrivilege == "admin")
+            {
+                <div class="nav-item px-3" style="color: white;">
+                    Your privilege level: @userPrivilege 
+                </div>
+            }
+
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    Home
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="rent_car">
+                    View cars to rent
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manage_account">
+                    Account
+                </NavLink>
+            </div>
+
+            @if (userPrivilege == "employee" || userPrivilege == "admin")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="add_car">
+                        Add Car
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="rentouts">
+                        View rentout history
+                    </NavLink>
+                </div>
+            }
+
+            @if (userPrivilege == "admin")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="logs">
+                        View Logs
+                    </NavLink>
+                </div>
+            }
+        }
+    </nav>
+</div>
+
+@code {
+
+    [Parameter]
+    public bool isLoggedIn { get; set; }
+    
+    [Parameter]
+    public string userPrivilege { get; set; }
+
+    [Parameter]
+    public bool forceReload { get; set; } 
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadLoginData();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadLoginData()
+    {
+        isLoggedIn = await authService.IsLoggedInAsync();
+        if (isLoggedIn)
+        {
+            userPrivilege = await authService.GetUserPrivilegeAsync();
+            forceReload = false;
+        }
+    }
+}

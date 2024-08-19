@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RentalsApp": {
+      "commandName": "Project",
+      "workingDirectory": "../..\\RentalsApp\\RentalsApp"
+    }
+  }
+}

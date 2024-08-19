@@ -1,0 +1,6 @@
+{
+  "ConnectionStrings": {
+    "DatabaseConnection": "Host=horton.db.elephantsql.com; Database=horahqkv; Username=horahqkv; Password=ViMyNKtDNz4F959L64dTUMo2gPQ_i14z"
+  }
+
+}
